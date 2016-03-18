@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2015, John Wiegley.  All rights reserved.
+ * Copyright (c) 2003-2016, John Wiegley.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -742,16 +742,6 @@ public:
   }
 
   bool valid() const;
-
-#if HAVE_BOOST_SERIALIZATION
-private:
-  /** Serialization. */
-
-  friend class boost::serialization::access;
-
-  template<class Archive>
-  void serialize(Archive& ar, const unsigned int /* version */);
-#endif // HAVE_BOOST_SERIALIZATION
 
   /*@}*/
 };

@@ -1,6 +1,6 @@
 ;;; ledger-post.el --- Helper code for use with the "ledger" command-line tool
 
-;; Copyright (C) 2003-2015 John Wiegley (johnw AT gnu DOT org)
+;; Copyright (C) 2003-2016 John Wiegley (johnw AT gnu DOT org)
 
 ;; This file is not part of GNU Emacs.
 
@@ -41,6 +41,16 @@
   :type 'integer
   :group 'ledger-post)
 
+(defcustom ledger-post-amount-alignment-at :end
+  "Position at which the amount is ailgned.
+
+Can be :end to align on the last number of the amount (can be
+followed by unaligned commodity) or :decimal to align at the
+decimal separator."
+  :type '(radio (const :tag "align at the end of amount" :end)
+                (const :tag "align at the decimal separator" :decimal))
+  :group 'ledger-post)
+
 (defcustom ledger-post-use-completion-engine :built-in
   "Which completion engine to use, :iswitchb or :ido chose those engines.
 :built-in uses built-in Ledger-mode completion"
@@ -79,8 +89,11 @@ point at beginning of the commodity."
     (when (re-search-forward ledger-amount-regex end t)
       (goto-char (match-beginning 0))
       (skip-syntax-forward " ")
-      (- (or (match-end 4)
-             (match-end 3)) (point)))))
+      (cond
+       ((eq ledger-post-amount-alignment-at :end)
+        (- (or (match-end 4) (match-end 3)) (point)))
+       ((eq ledger-post-amount-alignment-at :decimal)
+        (- (match-end 3) (point)))))))
 
 (defun ledger-next-account (&optional end)
   "Move to the beginning of the posting, or status marker, limit to END.
@@ -95,27 +108,19 @@ at beginning of account"
         (current-column))))
 
 (defun ledger-post-align-xact (pos)
-	"Align all the posting in the xact at POS."
-	(interactive "d")
+  "Align all the posting in the xact at POS."
+  (interactive "d")
   (let ((bounds (ledger-navigate-find-xact-extents pos)))
     (ledger-post-align-postings (car bounds) (cadr bounds))))
 
-(defun ledger-post-align-postings (&optional beg end)
-  "Align all accounts and amounts between BEG and END, or the current line."
-  (interactive)
+(defun ledger-post-align-postings (beg end)
+  "Align all accounts and amounts between BEG and END, or the current region, or, if no region, the current line."
+  (interactive "r")
 
   (save-excursion
-    (if (or (not (mark))
-            (not (use-region-p)))
-        (set-mark (point)))
-
     (let ((inhibit-modification-hooks t)
-          (mark-first (< (mark) (point)))
           acct-start-column acct-end-column acct-adjust amt-width amt-adjust
           (lines-left 1))
-
-      (unless beg (setq beg (if mark-first (mark) (point))))
-      (unless end (setq end (if mark-first (mark) (point))))
 
       ;; Extend region to whole lines
       (let ((start-marker (set-marker (make-marker) (save-excursion
@@ -153,6 +158,19 @@ at beginning of account"
           (forward-line)
           (setq lines-left (not (eobp)))))
       (setq inhibit-modification-hooks nil))))
+
+(defun ledger-post-align-dwim ()
+  "Align all the posting of the current xact or the current region.
+
+If the point is in a comment, fill the comment paragraph as
+regular text."
+  (interactive)
+  (cond
+   ((nth 4 (syntax-ppss))
+    (call-interactively 'ledger-post-align-postings)
+    (fill-paragraph))
+   ((use-region-p) (call-interactively 'ledger-post-align-postings))
+   (t (call-interactively 'ledger-post-align-xact))))
 
 (defun ledger-post-edit-amount ()
   "Call 'calc-mode' and push the amount in the posting to the top of stack."

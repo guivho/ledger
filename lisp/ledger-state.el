@@ -1,6 +1,6 @@
 ;;; ledger-state.el --- Helper code for use with the "ledger" command-line tool
 
-;; Copyright (C) 2003-2015 John Wiegley (johnw AT gnu DOT org)
+;; Copyright (C) 2003-2016 John Wiegley (johnw AT gnu DOT org)
 
 ;; This file is not part of GNU Emacs.
 
@@ -114,8 +114,8 @@ dropped."
           (when (not (eq (ledger-state-from-char (char-after)) 'comment))
             (insert (ledger-char-from-state cur-status) " ")
             (if (and (search-forward "  " (line-end-position) t)
-										 (looking-at "  "))
-								(delete-char 2)))
+                     (looking-at "  "))
+                (delete-char 2)))
           (forward-line))
         (setq new-status nil)))
 

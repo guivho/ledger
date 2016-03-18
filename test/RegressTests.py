@@ -164,6 +164,10 @@ class RegressFile(object):
             harness.failure(os.path.basename(self.filename))
 
     def run_tests(self):
+        if os.path.getsize(self.filename) == 0:
+          print >>sys.stderr, "WARNING: Empty testfile detected: %s" % (self.filename)
+          harness.failure(os.path.basename(self.filename))
+          return False
         test = self.read_test()
         while test:
             self.run_test(test)

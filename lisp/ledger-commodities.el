@@ -1,6 +1,6 @@
 ;;; ledger-commodities.el --- Helper code for use with the "ledger" command-line tool
 
-;; Copyright (C) 2003-2015 John Wiegley (johnw AT gnu DOT org)
+;; Copyright (C) 2003-2016 John Wiegley (johnw AT gnu DOT org)
 
 ;; This file is not part of GNU Emacs.
 
@@ -32,6 +32,16 @@
   "The default commodity for use in target calculations in ledger reconcile."
   :type 'string
   :group 'ledger-reconcile)
+
+(defun ledger-read-commodity-with-prompt (prompt)
+  "Read commodity name after PROMPT.
+
+Default value is `ledger-reconcile-default-commodity'."
+  (let* ((buffer (current-buffer))
+         (commodities (with-temp-buffer
+                        (ledger-exec-ledger buffer (current-buffer) "commodities")
+                        (split-string (buffer-string) "\n" t))))
+    (completing-read prompt commodities nil t nil nil ledger-reconcile-default-commodity)))
 
 (defun ledger-split-commodity-string (str)
   "Split a commoditized string, STR, into two parts.
@@ -91,8 +101,8 @@ Returns a list with (value commodity)."
     (error "Can't add different commodities, %S to %S" c1 c2)))
 
 (defun ledger-strip (str char)
-	"Return STR with CHAR removed."
-	(replace-regexp-in-string char "" str))
+  "Return STR with CHAR removed."
+  (replace-regexp-in-string char "" str))
 
 (defun ledger-string-to-number (str &optional decimal-comma)
   "improve builtin string-to-number by handling internationalization, and return nil if number can't be parsed"
@@ -105,7 +115,7 @@ Returns a list with (value commodity)."
     (string-to-number nstr)))
 
 (defun ledger-number-to-string (n &optional decimal-comma)
-	"number-to-string that handles comma as decimal."
+  "number-to-string that handles comma as decimal."
   (let ((str (number-to-string n)))
     (when (or decimal-comma
               (assoc "decimal-comma" ledger-environment-alist))
@@ -124,7 +134,7 @@ longer ones are after the value."
       (concat commodity " " str))))
 
 (defun ledger-read-commodity-string (prompt)
-	"Read an amount from mini-buffer using PROMPT."
+  "Read an amount from mini-buffer using PROMPT."
   (let ((str (read-from-minibuffer
               (concat prompt " (" ledger-reconcile-default-commodity "): ")))
         comm)

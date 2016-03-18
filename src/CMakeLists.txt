@@ -1,3 +1,7 @@
+set(LEDGER_CLI_SOURCES
+  global.cc
+  main.cc)
+
 set(LEDGER_SOURCES
   stats.cc
   generate.cc
@@ -24,7 +28,6 @@ set(LEDGER_SOURCES
   textual.cc
   temps.cc
   journal.cc
-  archive.cc
   account.cc
   xact.cc
   post.cc
@@ -76,7 +79,6 @@ set(LEDGER_INCLUDES
   account.h
   amount.h
   annotate.h
-  archive.h
   balance.h
   chain.h
   commodity.h
@@ -150,7 +152,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
       -Wno-unused-parameter
       -Wno-c++98-compat
       -fno-limit-debug-info)
-  
+
     macro(ADD_PCH_RULE _header_filename _src_list _other_srcs)
       set(_pch_filename "${_header_filename}.pch")
 
@@ -186,7 +188,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_COMPILER_ARG1} ${_args}
         DEPENDS ${_header_filename})
     endmacro(ADD_PCH_RULE _header_filename _src_list _other_srcs)
-  
+
   elseif(CMAKE_CXX_COMPILER MATCHES "g\\+\\+")
     set(GXX_WARNING_FLAGS
       -pedantic
@@ -208,7 +210,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
       -Wno-strict-aliasing)
 
     add_definitions(${GXX_WARNING_FLAGS})
-  
+
     macro(ADD_PCH_RULE _header_filename _src_list _other_srcs)
       set(_gch_filename "${_header_filename}.gch")
 
@@ -245,7 +247,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_COMPILER_ARG1} ${_args}
         DEPENDS ${_header_filename})
     endmacro(ADD_PCH_RULE _header_filename _src_list _other_srcs)
-  
+
   else()
     macro(ADD_PCH_RULE _header_filename _src_list _other_srcs)
     endmacro(ADD_PCH_RULE _header_filename _src_list _other_srcs)
@@ -255,7 +257,7 @@ else()
   endmacro(ADD_PCH_RULE _header_filename _src_list _other_srcs)
 endif()
 
-add_pch_rule(${PROJECT_BINARY_DIR}/system.hh LEDGER_SOURCES main.cc global.cc)
+add_pch_rule(${PROJECT_BINARY_DIR}/system.hh LEDGER_SOURCES LEDGER_CLI_SOURCES)
 
 include(GNUInstallDirs)
 
@@ -271,6 +273,9 @@ if (BUILD_LIBRARY)
 
   add_executable(ledger main.cc global.cc)
   target_link_libraries(ledger libledger)
+  if (CMAKE_SYSTEM_NAME STREQUAL Darwin AND HAVE_BOOST_PYTHON)
+    target_link_libraries(ledger ${PYTHON_LIBRARIES})
+  endif()
 
   install(TARGETS libledger DESTINATION ${CMAKE_INSTALL_LIBDIR})
   install(FILES ${LEDGER_INCLUDES}
@@ -292,7 +297,7 @@ print(s.get_python_lib(True, prefix=''))"
   if (PYTHON_SITE_PACKAGES)
     if (WIN32 AND NOT CYGWIN)
       set(_ledger_python_module_name "ledger.pyd")
-    elseif(CMAKE_HOST_APPLE)
+    elseif(CMAKE_SYSTEM_NAME STREQUAL Darwin)
       set(_ledger_python_module_name "ledger.so")
     else()
       set(_ledger_python_module_name "ledger${CMAKE_SHARED_LIBRARY_SUFFIX}")

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2015, John Wiegley.  All rights reserved.
+ * Copyright (c) 2003-2016, John Wiegley.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -96,7 +96,7 @@ namespace {
       TRACE_DTOR(create_price_xact);
     }
 
-    void operator()(datetime_t& date, const amount_t& price) {
+    void operator()(const datetime_t& date, const amount_t& price) {
       xact_t * xact;
       string   symbol = price.commodity().symbol();
 

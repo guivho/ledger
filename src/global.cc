@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2015, John Wiegley.  All rights reserved.
+ * Copyright (c) 2003-2016, John Wiegley.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -110,7 +110,7 @@ global_scope_t::~global_scope_t()
 void global_scope_t::parse_init(path init_file)
 {
   TRACE_START(init, 1, "Read initialization file");
-  
+
   parse_context_stack_t parsing_context;
   parsing_context.push(init_file);
   parsing_context.get_current().journal = session().journal.get();
@@ -122,15 +122,15 @@ void global_scope_t::parse_init(path init_file)
     throw_(parse_error, _f("Transactions found in initialization file '%1%'")
 	   % init_file);
   }
-  
+
   TRACE_FINISH(init, 1);
 }
 
 void global_scope_t::read_init()
 {
-  // if specified on the command line init_file_ is filled in 
+  // if specified on the command line init_file_ is filled in
   // global_scope_t::handle_debug_options.  If it was specified on the command line
-  // fail is the file doesn't exist. If no init file was specified
+  // fail if the file doesn't exist. If no init file was specified
   // on the command-line then try the default values, but don't fail if there
   // isn't one.
   path init_file;
@@ -144,6 +144,9 @@ void global_scope_t::read_init()
   } else {
     if (const char * home_var = std::getenv("HOME")) {
       init_file = (path(home_var) / ".ledgerrc");
+      if (! exists(init_file)) {
+        init_file = ("./.ledgerrc");
+      }
     } else {
       init_file = ("./.ledgerrc");
     }
@@ -316,17 +319,11 @@ option_t<global_scope_t> * global_scope_t::lookup_option(const char * p)
   case 'd':
     OPT(debug_);
     break;
-  case 'f':
-    OPT(full_help);
-    break;
   case 'h':
     OPT_(help);
-    else OPT(help_calc);
-    else OPT(help_comm);
-    else OPT(help_disp);
     break;
   case 'i':
-    OPT(init_file_);
+    OPT_(init_file_);
     break;
   case 'o':
     OPT(options);
@@ -505,7 +502,7 @@ void handle_debug_options(int argc, char * argv[])
       }
       else if (i + 1 < argc && std::strcmp(argv[i], "--debug") == 0) {
 #if DEBUG_ON
-        _log_level    = LOG_DEBUG;  
+        _log_level    = LOG_DEBUG;
         _log_category = argv[i + 1];
         i++;
 #endif

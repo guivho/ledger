@@ -1,6 +1,6 @@
 ;;; ledger-mode.el --- Helper code for use with the "ledger" command-line tool
 
-;; Copyright (C) 2003-2015 John Wiegley (johnw AT gnu DOT org)
+;; Copyright (C) 2003-2016 John Wiegley (johnw AT gnu DOT org)
 
 ;; This file is not part of GNU Emacs.
 
@@ -63,7 +63,7 @@
 
 (defun ledger-mode-dump-variable (var)
   "Format VAR for dump to buffer."
-	(if var
+  (if var
       (insert (format "         %s: %S\n" (symbol-name var) (eval var)))))
 
 (defun ledger-mode-dump-group (group)
@@ -78,7 +78,7 @@
 
 (defun ledger-mode-dump-configuration ()
   "Dump all customizations."
-	(interactive)
+  (interactive)
   (find-file "ledger-mode-dump")
   (ledger-mode-dump-group 'ledger))
 
@@ -99,11 +99,11 @@
 
 (defun ledger-read-account-with-prompt (prompt)
   "Read an account from the minibuffer with PROMPT."
-	(let ((context (ledger-context-at-point)))
+  (let ((context (ledger-context-at-point)))
     (ledger-read-string-with-default prompt
-																		 (if (eq (ledger-context-current-field context) 'account)
-																				 (regexp-quote (ledger-context-field-value context 'account))
-																			 nil))))
+                                     (if (eq (ledger-context-current-field context) 'account)
+                                         (regexp-quote (ledger-context-field-value context 'account))
+                                       nil))))
 
 (defun ledger-read-date (prompt)
   "Return user-supplied date after `PROMPT', defaults to today."
@@ -125,14 +125,19 @@
                          ": "))
                nil 'ledger-minibuffer-history default))
 
-(defun ledger-display-balance-at-point ()
+(defun ledger-display-balance-at-point (&optional arg)
   "Display the cleared-or-pending balance.
-And calculate the target-delta of the account being reconciled."
-  (interactive)
+And calculate the target-delta of the account being reconciled.
+
+With prefix argument \\[universal-argument] ask for the target commodity and convert
+the balance into that."
+  (interactive "P")
   (let* ((account (ledger-read-account-with-prompt "Account balance to show"))
+         (target-commodity (when arg (ledger-read-commodity-with-prompt "Target commodity: ")))
          (buffer (current-buffer))
          (balance (with-temp-buffer
-                    (ledger-exec-ledger buffer (current-buffer) "cleared" account)
+                    (apply 'ledger-exec-ledger buffer (current-buffer) "cleared" account
+                            (when target-commodity (list "-X" target-commodity)))
                     (if (> (buffer-size) 0)
                         (buffer-substring-no-properties (point-min) (1- (point-max)))
                       (concat account " is empty.")))))
@@ -159,7 +164,7 @@ Can indent, complete or align depending on context."
     (if (and (> (point) 1)
              (looking-back "\\([^ \t]\\)" 1))
         (ledger-pcomplete interactively)
-      (ledger-post-align-postings))))
+      (ledger-post-align-postings (line-beginning-position) (line-end-position)))))
 
 (defvar ledger-mode-abbrev-table)
 
@@ -222,7 +227,7 @@ With a prefix argument, remove the effective date."
 
 (defun ledger-mode-remove-extra-lines ()
   "Get rid of multiple empty lines."
-	(goto-char (point-min))
+  (goto-char (point-min))
   (while (re-search-forward "\n\n\\(\n\\)+" nil t)
     (replace-match "\n\n")))
 
@@ -286,6 +291,7 @@ With a prefix argument, remove the effective date."
 
     (define-key map [(meta ?p)] 'ledger-navigate-prev-xact-or-directive)
     (define-key map [(meta ?n)] 'ledger-navigate-next-xact-or-directive)
+    (define-key map [(meta ?q)] 'ledger-post-align-dwim)
     map)
   "Keymap for `ledger-mode'.")
 
@@ -340,10 +346,10 @@ With a prefix argument, remove the effective date."
           '(ledger-font-lock-keywords t t nil nil
                                       (font-lock-fontify-region-function . ledger-fontify-buffer-part))))
 
-	(set (make-local-variable 'pcomplete-parse-arguments-function) 'ledger-parse-arguments)
-	(set (make-local-variable 'pcomplete-command-completion-function) 'ledger-complete-at-point)
+  (set (make-local-variable 'pcomplete-parse-arguments-function) 'ledger-parse-arguments)
+  (set (make-local-variable 'pcomplete-command-completion-function) 'ledger-complete-at-point)
   (add-hook 'completion-at-point-functions 'pcomplete-completions-at-point nil t)
-	(add-hook 'after-save-hook 'ledger-report-redo)
+  (add-hook 'after-save-hook 'ledger-report-redo)
 
   (add-hook 'post-command-hook 'ledger-highlight-xact-under-point nil t)
 

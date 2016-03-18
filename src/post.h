@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2015, John Wiegley.  All rights reserved.
+ * Copyright (c) 2003-2016, John Wiegley.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -205,11 +205,7 @@ public:
   mutable optional<xdata_t> xdata_;
 
   bool has_xdata() const {
-#if BOOST_VERSION >= 105600
-    return xdata_ != NULL;
-#else
-    return xdata_;
-#endif
+    return static_cast<bool>(xdata_);
   }
   void clear_xdata() {
     xdata_ = none;
@@ -255,24 +251,6 @@ public:
       }
     }
   };
-
-#if HAVE_BOOST_SERIALIZATION
-private:
-  /** Serialization. */
-
-  friend class boost::serialization::access;
-
-  template<class Archive>
-  void serialize(Archive& ar, const unsigned int /* version */) {
-    ar & boost::serialization::base_object<item_t>(*this);
-    ar & xact;
-    ar & account;
-    ar & amount;
-    ar & amount_expr;
-    ar & cost;
-    ar & assigned_amount;
-  }
-#endif // HAVE_BOOST_SERIALIZATION
 };
 
 class journal_t;

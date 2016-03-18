@@ -1,6 +1,6 @@
 ;;; ledger-regex.el --- Helper code for use with the "ledger" command-line tool
 
-;; Copyright (C) 2003-2015 John Wiegley (johnw AT gnu DOT org)
+;; Copyright (C) 2003-2016 John Wiegley (johnw AT gnu DOT org)
 
 ;; This file is not part of GNU Emacs.
 
@@ -27,8 +27,14 @@
 (defconst ledger-amount-regex
   (concat "\\(  \\|\t\\| \t\\)[ \t]*-?"
           "\\([A-Z$€£₹_(]+ *\\)?"
-          "\\(-?[0-9,\\.]+?\\)"
-          "\\(.[0-9)]+\\)?"
+          ;; We either match just a number after the commodity with no
+          ;; decimal or thousand separators or a number with thousand
+          ;; separators.  If we have a decimal part starting with `,'
+          ;; or `.', because the match is non-greedy, it must leave at
+          ;; least one of those symbols for the following capture
+          ;; group, which then finishes the decimal part.
+          "\\(-?\\(?:[0-9]+\\|[0-9,.]+?\\)\\)"
+          "\\([,.][0-9)]+\\)?"
           "\\( *[[:word:]€£₹_\"]+\\)?"
           "\\([ \t]*[@={]@?[^\n;]+?\\)?"
           "\\([ \t]+;.+?\\|[ \t]*\\)?$"))
@@ -108,8 +114,8 @@
            defs
            (list
             `(defmacro
-               ,(intern (concat "ledger-regex-" (symbol-name name)))
-               (&optional string)
+                 ,(intern (concat "ledger-regex-" (symbol-name name)))
+                 (&optional string)
                ,(format "Return the match string for the %s" name)
                (match-string
                 ,(intern (concat "ledger-regex-" (symbol-name name)
@@ -153,9 +159,9 @@
            defs
            (list
             `(defmacro
-               ,(intern (concat "ledger-regex-" (symbol-name name)
-                                "-" (symbol-name var)))
-               (&optional string)
+                 ,(intern (concat "ledger-regex-" (symbol-name name)
+                                  "-" (symbol-name var)))
+                 (&optional string)
                ,(format "Return the sub-group match for the %s %s."
                         name var)
                (match-string
@@ -226,6 +232,22 @@
                       (macroexpand
                        `(rx (and line-start
                                  (regexp ,ledger-full-date-regexp)
+                                 (? (and (+ blank) (regexp ,ledger-state-regexp)))
+                                 (? (and (+ blank) (regexp ,ledger-code-regexp)))
+                                 (+ blank) (+? nonl)
+                                 (? (regexp ,ledger-end-note-regexp))
+                                 line-end)))
+                      "Match a transaction's first line (and optional notes)."
+                      (actual-date full-date actual)
+                      (effective-date full-date effective)
+                      state
+                      code
+                      (note end-note))
+
+(ledger-define-regexp recurring-line
+                      (macroexpand
+                       `(rx (and line-start
+                                 (regexp "\\[.+/.+/.+\\]")
                                  (? (and (+ blank) (regexp ,ledger-state-regexp)))
                                  (? (and (+ blank) (regexp ,ledger-code-regexp)))
                                  (+ blank) (+? nonl)
@@ -333,8 +355,8 @@
           "\\)"))
 
 (defconst ledger-xact-start-regex
-	(concat "^" ledger-iso-date-regexp  ;; subexp 1
-					"\\(=" ledger-iso-date-regexp "\\)?"
+  (concat "^" ledger-iso-date-regexp  ;; subexp 1
+          "\\(=" ledger-iso-date-regexp "\\)?"
           ))
 
 (defconst ledger-xact-after-date-regex
@@ -345,17 +367,17 @@
           ))
 
 (defconst ledger-posting-regex
-	(concat "^[ \t]+ ?"  ;; initial white space
-					"\\([*!]\\)? ?" ;; state, subexpr 1
-					"\\([[:print:]]+\\([ \t][ \t]\\)\\)"  ;; account, subexpr 2
-					"\\([^;\n]*\\)"  ;; amount, subexpr 4
-					"\\(.*\\)" ;; comment, subexpr 5
-					))
+  (concat "^[ \t]+ ?"  ;; initial white space
+          "\\([*!]\\)? ?" ;; state, subexpr 1
+          "\\([[:print:]]+\\([ \t][ \t]\\)\\)"  ;; account, subexpr 2
+          "\\([^;\n]*\\)"  ;; amount, subexpr 4
+          "\\(.*\\)" ;; comment, subexpr 5
+          ))
 
 
 
 (defconst ledger-directive-start-regex
-	"[=~;#%|\\*[A-Za-z]")
+  "[=~;#%|\\*[A-Za-z]")
 
 
 (provide 'ledger-regex)

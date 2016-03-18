@@ -1,6 +1,6 @@
 ;;; ledger-complete.el --- Helper code for use with the "ledger" command-line tool
 
-;; Copyright (C) 2003-2015 John Wiegley (johnw AT gnu DOT org)
+;; Copyright (C) 2003-2016 John Wiegley (johnw AT gnu DOT org)
 
 ;; This file is not part of GNU Emacs.
 
@@ -157,7 +157,7 @@
             (ledger-accounts)))))
 
 (defun ledger-trim-trailing-whitespace (str)
-	(replace-regexp-in-string "[ \t]*$" "" str))
+  (replace-regexp-in-string "[ \t]*$" "" str))
 
 (defun ledger-fully-complete-xact ()
   "Completes a transaction if there is another matching payee in the buffer.
@@ -235,7 +235,7 @@ ledger-magic-tab would cycle properly"
                pcomplete-seen pcomplete-norm-func
                pcomplete-args pcomplete-last pcomplete-index
                pcomplete-autolist
-							 (completions (pcomplete-completions))
+               (completions (pcomplete-completions))
                (result (pcomplete-do-complete pcomplete-stub completions))
                (pcomplete-termination-string ""))
           (and result

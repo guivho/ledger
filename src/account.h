@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2015, John Wiegley.  All rights reserved.
+ * Copyright (c) 2003-2016, John Wiegley.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -261,11 +261,7 @@ public:
   mutable optional<xdata_t> xdata_;
 
   bool has_xdata() const {
-#if BOOST_VERSION >= 105600
-    return xdata_ != NULL;
-#else
-    return xdata_;
-#endif
+    return static_cast<bool>(xdata_);
   }
   void clear_xdata();
   xdata_t& xdata() {
@@ -289,26 +285,6 @@ public:
   }
   bool children_with_xdata() const;
   std::size_t children_with_flags(xdata_t::flags_t flags) const;
-
-#if HAVE_BOOST_SERIALIZATION
-private:
-  /** Serialization. */
-
-  friend class boost::serialization::access;
-
-  template<class Archive>
-  void serialize(Archive& ar, const unsigned int /* version */) {
-    ar & boost::serialization::base_object<supports_flags<> >(*this);
-    ar & boost::serialization::base_object<scope_t>(*this);
-    ar & parent;
-    ar & name;
-    ar & note;
-    ar & depth;
-    ar & accounts;
-    ar & posts;
-    ar & _fullname;
-  }
-#endif // HAVE_BOOST_SERIALIZATION
 };
 
 std::ostream& operator<<(std::ostream& out, const account_t& account);

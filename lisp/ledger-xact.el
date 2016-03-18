@@ -1,6 +1,6 @@
 ;;; ledger-xact.el --- Helper code for use with the "ledger" command-line tool
 
-;; Copyright (C) 2003-2015 John Wiegley (johnw AT gnu DOT org)
+;; Copyright (C) 2003-2016 John Wiegley (johnw AT gnu DOT org)
 
 ;; This file is not part of GNU Emacs.
 
@@ -89,9 +89,8 @@ MOMENT is an encoded date"
     (when (and (eobp) last-xact-start)
       (let ((end (cadr (ledger-navigate-find-xact-extents last-xact-start))))
         (goto-char end)
-        (if (eobp)
-            (insert "\n")
-          (forward-line))))))
+        (insert "\n")
+        (forward-line)))))
 
 (defun ledger-xact-iterate-transactions (callback)
   "Iterate through each transaction call CALLBACK for each."
@@ -137,15 +136,14 @@ MOMENT is an encoded date"
                            (string-to-number (match-string 3 date))
                            (string-to-number (match-string 2 date)))))
     (ledger-xact-find-slot encoded-date)
-    (let ((here (point)))
-      (insert transaction "\n")
-      (goto-char here)
-      (ledger-navigate-beginning-of-xact)
-      (re-search-forward ledger-iso-date-regexp)
-      (replace-match date)
-      (ledger-next-amount)
-      (if (re-search-forward "[-0-9]")
-          (goto-char (match-beginning 0))))))
+    (insert transaction "\n")
+    (beginning-of-line -1)
+    (ledger-navigate-beginning-of-xact)
+    (re-search-forward ledger-iso-date-regexp)
+    (replace-match date)
+    (ledger-next-amount)
+    (if (re-search-forward "[-0-9]")
+        (goto-char (match-beginning 0)))))
 
 (defun ledger-delete-current-transaction (pos)
   "Delete the transaction surrounging POS."
@@ -191,8 +189,8 @@ correct chronological place in the buffer."
              (goto-char (point-min))
              (if (looking-at "Error: ")
                  (error (concat "Error in ledger-add-transaction: " (buffer-string)))
-							 (ledger-post-align-postings (point-min) (point-max))
-							 (buffer-string)))
+               (ledger-post-align-postings (point-min) (point-max))
+               (buffer-string)))
            "\n"))
       (progn
         (insert (car args) " \n\n")

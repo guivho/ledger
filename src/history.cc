@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2015, John Wiegley.  All rights reserved.
+ * Copyright (c) 2003-2016, John Wiegley.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -475,7 +475,7 @@ commodity_history_impl_t::find_price(const commodity_t& source,
 #endif
 
   vertex_descriptor v = tv;
-  for (vertex_descriptor u = predecessorMap[v]; 
+  for (vertex_descriptor u = predecessorMap[v];
        u != v;
        v = u, u = predecessorMap[v])
   {

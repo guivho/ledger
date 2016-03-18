@@ -1,6 +1,6 @@
 ;;; ledger-context.el --- Helper code for use with the "ledger" command-line tool
 
-;; Copyright (C) 2003-2015 John Wiegley (johnw AT gnu DOT org)
+;; Copyright (C) 2003-2016 John Wiegley (johnw AT gnu DOT org)
 
 ;; This file is not part of GNU Emacs.
 
@@ -32,10 +32,10 @@
 ;; `ledger-single-line-config' macro to form the regex and list of
 ;; elements
 (defconst ledger-indent-string "\\(^[ \t]+\\)")
-(defconst ledger-status-string "\\([*! ]?\\)")
+(defconst ledger-status-string "\\(* \\|! \\)?")
 (defconst ledger-account-string "[\\[(]?\\(.*?\\)[])]?")
-(defconst ledger-separator-string "\\s-\\s-")
-(defconst ledger-amount-string "\\(-?[0-9]+[\\.,][0-9]*\\)")
+(defconst ledger-separator-string "\\(\\s-\\s-+\\)")
+(defconst ledger-amount-string "\\(-?[0-9]+\\(?:[\\.,][0-9]*\\)?\\)")
 (defconst ledger-comment-string "[ \t]*;[ \t]*\\(.*?\\)")
 (defconst ledger-nil-string "\\([ \t]\\)")
 (defconst ledger-commodity-string "\\(.+?\\)")

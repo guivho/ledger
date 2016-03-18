@@ -8,8 +8,14 @@ PROJECT(ledger)
 
 set(Ledger_VERSION_MAJOR 3)
 set(Ledger_VERSION_MINOR 1)
-set(Ledger_VERSION_PATCH 0)
-set(Ledger_VERSION_DATE  20141005)
+set(Ledger_VERSION_PATCH 1)
+set(Ledger_VERSION_PRERELEASE "")
+set(Ledger_VERSION_DATE  20160111)
+
+set(Ledger_TEST_TIMEZONE "America/Chicago")
+
+# Point CMake at any custom modules we may ship
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 enable_testing()
 
@@ -52,6 +58,7 @@ endif()
 
 ########################################################################
 
+set(Python_ADDITIONAL_VERSIONS 2.7 2.6)
 find_package(PythonInterp)      # Used for running tests
 
 if (USE_PYTHON)
@@ -59,7 +66,6 @@ if (USE_PYTHON)
     message(ERROR "Building the python module requires BUILD_LIBRARY=ON.")
   endif()
 
-  set(Python_ADDITIONAL_VERSIONS 2.7 2.6)
   find_package(PythonLibs)
   if (PYTHONLIBS_FOUND)
     set(BOOST_PYTHON python)
@@ -158,6 +164,34 @@ endif()
 
 cmake_pop_check_state()
 
+# Check if fix for https://github.com/boostorg/python/issues/39 is needed
+if (HAVE_BOOST_PYTHON)
+cmake_push_check_state()
+
+set(CMAKE_REQUIRED_INCLUDES
+    ${CMAKE_INCLUDE_PATH} ${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})
+set(CMAKE_REQUIRED_LIBRARIES
+    ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${PROFILE_LIBS})
+
+check_cxx_source_runs("
+#include <boost/python.hpp>
+
+struct X { int y; };
+
+int main()
+{
+  boost::python::make_setter(&X::y);
+}" BOOST_MAKE_SETTER_RUNS)
+
+if (BOOST_MAKE_SETTER_RUNS)
+  set(HAVE_BOOST_159_ISSUE_39 0)
+else()
+  set(HAVE_BOOST_159_ISSUE_39 1)
+endif()
+
+cmake_pop_check_state()
+endif()
+
 ########################################################################
 
 include_directories(${CMAKE_INCLUDE_PATH})
@@ -224,7 +258,14 @@ macro(add_ledger_library_dependencies _target)
     target_link_libraries(${_target} ${INTL_LIB})
   endif()
   if (HAVE_BOOST_PYTHON)
-    target_link_libraries(${_target} ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
+    if(CMAKE_SYSTEM_NAME STREQUAL Darwin)
+      # Don't link directly to a Python framework on OS X, to avoid segfaults
+      # when the module is imported from a different interpreter
+      target_link_libraries(${_target} ${Boost_LIBRARIES})
+      set_target_properties(${_target} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+    else()
+      target_link_libraries(${_target} ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
+    endif()
   else()
     target_link_libraries(${_target} ${Boost_LIBRARIES})
   endif()
@@ -236,13 +277,20 @@ endmacro(add_ledger_library_dependencies _target)
 
 ########################################################################
 
+include(FindUtfcpp)
+if (UTFCPP_FOUND)
+  include_directories("${UTFCPP_INCLUDE_DIR}")
+else()
+  message(FATAL_ERROR "Missing required header file: utf8.h\n"
+    "Define UTFCPP_PATH or install utfcpp locally into the source tree below lib/utfcpp/."
+    )
+endif()
+
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
 # add the binary tree to the search path for include files so that we will
-# find TutorialConfig.h
-include_directories("${PROJECT_SOURCE_DIR}/lib")
-include_directories("${PROJECT_SOURCE_DIR}/lib/utfcpp/source")
+# find system.hh
 include_directories("${PROJECT_BINARY_DIR}")
 
 configure_file(
@@ -267,11 +315,12 @@ add_subdirectory(test)
 # build a CPack driven installer package
 include (InstallRequiredSystemLibraries)
 
-set (CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/doc/LICENSE.rtf")
+set (CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE.md")
 set (CPACK_PACKAGE_VERSION_MAJOR "${Ledger_VERSION_MAJOR}")
 set (CPACK_PACKAGE_VERSION_MINOR "${Ledger_VERSION_MINOR}")
-set (CPACK_PACKAGE_VERSION_PATCH "${Ledger_VERSION_PATCH}")
+set (CPACK_PACKAGE_VERSION_PATCH "${Ledger_VERSION_PATCH}${Ledger_VERSION_PRERELEASE}")
 
+set (CPACK_GENERATOR "TBZ2")
 set (CPACK_SOURCE_GENERATOR "TBZ2")
 set (CPACK_SOURCE_PACKAGE_FILE_NAME
   "${CMAKE_PROJECT_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")

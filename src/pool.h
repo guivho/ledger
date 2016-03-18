@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2015, John Wiegley.  All rights reserved.
+ * Copyright (c) 2003-2016, John Wiegley.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -78,8 +78,8 @@ public:
   commodity_t *             default_commodity;
 
   bool           keep_base;     // --base
-  optional<path> price_db;      // --price-db= 
-  long           quote_leeway;  // --leeway= 
+  optional<path> price_db;      // --price-db=
+  long           quote_leeway;  // --leeway=
   bool           get_quotes;    // --download
 
   function<optional<price_point_t>
@@ -132,26 +132,6 @@ public:
   parse_price_expression(const std::string&          str,
                          const bool                  add_prices = true,
                          const optional<datetime_t>& moment     = none);
-
-#if HAVE_BOOST_SERIALIZATION
-private:
-  /** Serialization. */
-
-  friend class boost::serialization::access;
-
-  template<class Archive>
-  void serialize(Archive& ar, const unsigned int /* version */) {
-    ar & current_pool;
-    ar & commodities;
-    ar & annotated_commodities;
-    ar & null_commodity;
-    ar & default_commodity;
-    ar & keep_base;
-    ar & price_db;
-    ar & quote_leeway;
-    ar & get_quotes;
-  }
-#endif // HAVE_BOOST_SERIALIZATION
 };
 
 } // namespace ledger
